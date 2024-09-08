@@ -1,6 +1,7 @@
-curl -X POST http://localhost:8080/device \
+curl -X POST http://localhost:8080/signatures/device \
   -H "Content-Type: application/json" \
   -d '{
+    "key": "72588c2e-673b-4e71-9241-5705ca4aeaee",
     "algorithm": "RSA",
     "label": "Device1"
   }'

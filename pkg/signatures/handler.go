@@ -5,17 +5,13 @@ import (
 	"encoding/json"
 	"net/http"
 
+	"github.com/fiskaly/coding-challenges/signing-service-challenge/pkg/crypto"
 	"github.com/google/uuid"
 )
 
 type Storage interface {
 	CreateDevice(ctx context.Context, input CreateDeviceInput) error
 	// SignTransaction(deviceKey uuid.UUID, data string) (Device, error)
-}
-
-type Signer interface {
-	Keys() ([]byte, []byte, error)
-	Sign(dataToBeSigned []byte) ([]byte, error)
 }
 
 type Handler struct {
@@ -54,14 +50,23 @@ func (h *Handler) CreateDevice(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// TODO: Generate public and private key.
+	keys := crypto.GenerateECDSAWithMarshal
+	if body.Algorithm == RSA {
+		keys = crypto.GenerateRSAWithMarshal
+	}
+
+	public, private, err := keys()
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
 
 	input := CreateDeviceInput{
 		Key:        body.Key,
 		Algorithm:  body.Algorithm,
 		Label:      body.Label,
-		PublicKey:  []byte{}, // TODO: add later
-		PrivateKey: []byte{}, // TODO: add later
+		PublicKey:  public,
+		PrivateKey: private,
 	}
 
 	// TODO: handling multiple cases

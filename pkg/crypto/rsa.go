@@ -9,58 +9,58 @@ import (
 	"encoding/pem"
 )
 
-type RSA struct {
-	keyPair    *RSAKeyPair
-	marshaller RSAMarshaler
-	signer     RSASigner
-}
+// type RSA struct {
+// 	keyPair    *RSAKeyPair
+// 	marshaller RSAMarshaler
+// 	signer     RSASigner
+// }
 
-func NewRSA() (*RSA, error) {
-	generator := NewRSAGenerator()
-	keyPair, err := generator.Generate()
-	if err != nil {
-		return nil, err
-	}
+// func NewRSA() (*RSA, error) {
+// 	generator := NewRSAGenerator()
+// 	keyPair, err := generator.Generate()
+// 	if err != nil {
+// 		return nil, err
+// 	}
 
-	marshaller := NewRSAMarshaler()
-	_, private, err := marshaller.Marshal(*keyPair)
-	if err != nil {
-		return nil, err
-	}
+// 	marshaller := NewRSAMarshaler()
+// 	_, private, err := marshaller.Marshal(*keyPair)
+// 	if err != nil {
+// 		return nil, err
+// 	}
 
-	decodedPrivate, err := marshaller.Unmarshal(private)
-	if err != nil {
-		return nil, err
-	}
+// 	decodedPrivate, err := marshaller.Unmarshal(private)
+// 	if err != nil {
+// 		return nil, err
+// 	}
 
-	signer := NewRSASigner(decodedPrivate.Private)
+// 	signer := NewRSASigner(decodedPrivate.Private)
 
-	algorithm := RSA{
-		keyPair:    keyPair,
-		marshaller: marshaller,
-		signer:     *signer,
-	}
+// 	algorithm := RSA{
+// 		keyPair:    keyPair,
+// 		marshaller: marshaller,
+// 		signer:     *signer,
+// 	}
 
-	return &algorithm, nil
-}
+// 	return &algorithm, nil
+// }
 
-func (r *RSA) Keys() ([]byte, []byte, error) {
-	public, private, err := r.marshaller.Marshal(*r.keyPair)
-	if err != nil {
-		return nil, nil, err
-	}
+// func (r *RSA) Keys() ([]byte, []byte, error) {
+// 	public, private, err := r.marshaller.Marshal(*r.keyPair)
+// 	if err != nil {
+// 		return nil, nil, err
+// 	}
 
-	return public, private, nil
-}
+// 	return public, private, nil
+// }
 
-func (r *RSA) Sign(data []byte) ([]byte, error) {
-	signature, err := r.signer.Sign(data)
-	if err != nil {
-		return nil, err
-	}
+// func (r *RSA) Sign(data []byte) ([]byte, error) {
+// 	signature, err := r.signer.Sign(data)
+// 	if err != nil {
+// 		return nil, err
+// 	}
 
-	return signature, nil
-}
+// 	return signature, nil
+// }
 
 // RSAKeyPair is a DTO that holds RSA private and public keys.
 type RSAKeyPair struct {
@@ -149,4 +149,20 @@ func (s *RSASigner) Sign(dataToBeSigned []byte) ([]byte, error) {
 	}
 
 	return signature, nil
+}
+
+func GenerateRSAWithMarshal() ([]byte, []byte, error) {
+	generator := NewRSAGenerator()
+	keyPair, err := generator.Generate()
+	if err != nil {
+		return nil, nil, err
+	}
+
+	marshaler := NewRSAMarshaler()
+	public, private, err := marshaler.Marshal(*keyPair)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return public, private, nil
 }
