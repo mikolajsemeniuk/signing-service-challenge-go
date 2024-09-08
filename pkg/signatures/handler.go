@@ -5,13 +5,13 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"github.com/fiskaly/coding-challenges/signing-service-challenge/pkg/crypto"
 	"github.com/google/uuid"
 )
 
 type Storage interface {
-	CreateDevice(ctx context.Context, input CreateDeviceInput) error
-	// SignTransaction(deviceKey uuid.UUID, data string) (Device, error)
+	CreateDevice(ctx context.Context, input CreateDeviceInput) (Device, error)
+	FindDevice(ctx context.Context, key uuid.UUID) (Device, error)
+	CreateTransaction(ctx context.Context, input CreateTransactionInput) (Transaction, error)
 }
 
 type Handler struct {
@@ -23,7 +23,7 @@ func NewHandler(m *http.ServeMux, s Storage) *Handler {
 	handler := &Handler{mux: m, storage: s}
 
 	handler.mux.HandleFunc("POST /device", handler.CreateDevice)
-	handler.mux.HandleFunc("POST /sign", handler.SignTransaction)
+	handler.mux.HandleFunc("POST /transaction", handler.SignTransaction)
 
 	return handler
 }
@@ -50,27 +50,14 @@ func (h *Handler) CreateDevice(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	keys := crypto.GenerateECDSAWithMarshal
-	if body.Algorithm == RSA {
-		keys = crypto.GenerateRSAWithMarshal
-	}
-
-	public, private, err := keys()
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	}
-
 	input := CreateDeviceInput{
-		Key:        body.Key,
-		Algorithm:  body.Algorithm,
-		Label:      body.Label,
-		PublicKey:  public,
-		PrivateKey: private,
+		Key:       body.Key,
+		Algorithm: body.Algorithm,
+		Label:     body.Label,
 	}
 
 	// TODO: handling multiple cases
-	if err := h.storage.CreateDevice(r.Context(), input); err != nil {
+	if _, err := h.storage.CreateDevice(r.Context(), input); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
@@ -98,16 +85,18 @@ func (h *Handler) SignTransaction(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// save to store
-	// increment counter
-	// sign data.
-
-	out := SignTransactionResponse{
-		Signature:  "<signature_base64_encoded>",
-		SignedData: "<signature_counter>_<data_to_be_signed>_<last_signature_base64_encoded>",
+	input := CreateTransactionInput{
+		DeviceID: body.DeviceID,
+		Data:     body.Data,
 	}
 
-	response, _ := json.Marshal(out)
+	transaction, err := h.storage.CreateTransaction(r.Context(), input)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	response, _ := json.Marshal(transaction)
 	if _, err := w.Write(response); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 	}

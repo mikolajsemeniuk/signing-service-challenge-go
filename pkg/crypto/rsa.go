@@ -166,3 +166,19 @@ func GenerateRSAWithMarshal() ([]byte, []byte, error) {
 
 	return public, private, nil
 }
+
+func UnmarshalRSAWithSign(data, private []byte) ([]byte, error) {
+	marshaler := NewRSAMarshaler()
+	keyPair, err := marshaler.Unmarshal(private)
+	if err != nil {
+		return nil, err
+	}
+
+	signer := NewRSASigner(keyPair.Private)
+	signature, err := signer.Sign(data)
+	if err != nil {
+		return nil, err
+	}
+
+	return signature, nil
+}

@@ -2,33 +2,32 @@ package signatures
 
 import (
 	"context"
+	"encoding/base64"
 	"sync"
+	"time"
 
+	"github.com/fiskaly/coding-challenges/signing-service-challenge/pkg/crypto"
 	"github.com/google/uuid"
 )
 
-// TODO: in-memory persistence ...
-// TODO: compatible with postgres
-
 type Memory struct {
-	// TODO: Fix mutex for devices and signatures
-	mu         *sync.Mutex
-	devices    map[uuid.UUID]Device
-	signatures map[string]struct{}
+	mu           *sync.RWMutex
+	devices      map[uuid.UUID]Device
+	transactions []Transaction
 }
 
 func NewMemory() *Memory {
 	memory := &Memory{
-		mu:      &sync.Mutex{},
+		mu:      &sync.RWMutex{},
 		devices: map[uuid.UUID]Device{},
 	}
+
 	return memory
 }
 
-func (m *Memory) FindDevice(key uuid.UUID) (Device, error) {
-	// TODO: Fix mutex for devices and signatures
-	m.mu.Lock()
-	defer m.mu.Unlock()
+func (m *Memory) FindDevice(ctx context.Context, key uuid.UUID) (Device, error) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
 
 	device, exists := m.devices[key]
 	if !exists {
@@ -39,56 +38,79 @@ func (m *Memory) FindDevice(key uuid.UUID) (Device, error) {
 }
 
 type CreateDeviceInput struct {
-	Key        uuid.UUID
-	Algorithm  Algorithm
-	PublicKey  []byte
-	PrivateKey []byte
-	Label      string
+	Key       uuid.UUID
+	Algorithm Algorithm
+	Label     string
 }
 
-func (m *Memory) CreateDevice(ctx context.Context, input CreateDeviceInput) error {
-	// TODO: Fix mutex for devices and signatures
+func (m *Memory) CreateDevice(ctx context.Context, input CreateDeviceInput) (Device, error) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
-	key := uuid.New()
+	keys := crypto.GenerateECDSAWithMarshal
+	if input.Algorithm == RSA {
+		keys = crypto.GenerateRSAWithMarshal
+	}
+
+	public, private, err := keys()
+	if err != nil {
+		return Device{}, nil
+	}
+
 	device := Device{
 		Key:        input.Key,
 		Algorithm:  input.Algorithm,
-		PublicKey:  input.PublicKey,
-		PrivateKey: input.PrivateKey,
+		PublicKey:  public,
+		PrivateKey: private,
 		Label:      input.Label,
 	}
 
-	m.devices[key] = device
+	m.devices[input.Key] = device
 
-	return nil
+	return device, nil
 }
 
-func (m *Memory) CreateSignature(signature string) error {
-	// TODO: Fix mutex for devices and signatures
+type CreateTransactionInput struct {
+	DeviceID uuid.UUID
+	Data     string
+}
+
+func (m *Memory) CreateTransaction(ctx context.Context, input CreateTransactionInput) (Transaction, error) {
+	device, err := m.FindDevice(ctx, input.DeviceID)
+	if err != nil {
+		return Transaction{}, err
+	}
+
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
-	return nil
+	lastSignature := base64.StdEncoding.EncodeToString([]byte(device.Key.String()))
+	if device.Counter > 0 {
+		lastSignature = device.Transactions[len(device.Transactions)-1].Signature
+	}
+
+	data := string(device.Counter) + "." + input.Data + "." + lastSignature
+
+	sign := crypto.UnmarshalECDSAWithSign
+	if device.Algorithm == RSA {
+		sign = crypto.UnmarshalRSAWithSign
+	}
+
+	signature, err := sign([]byte(data), device.PrivateKey)
+	if err != nil {
+		return Transaction{}, err
+	}
+
+	transaction := Transaction{
+		Signature:  string(signature),
+		SignedData: data,
+		Created:    time.Now(),
+	}
+
+	device.Transactions = append(device.Transactions, transaction)
+	device.Counter += 1
+
+	m.devices[device.Key] = device
+
+	return transaction, nil
 }
-
-// type SignTransactionInput struct {
-// 	Key        uuid.UUID
-// 	Algorithm  Algorithm
-// 	PublicKey  string
-// 	PrivateKey string
-// 	Label      string
-// }
-
-// func (m *Memory) SignTransaction(deviceKey uuid.UUID, data string) (Device, error) {
-// 	m.mu.Lock()
-// 	defer m.mu.Unlock()
-
-// 	device, err := m.FindDevice(deviceKey)
-// 	if err != nil {
-// 		return device, err
-// 	}
-
-// 	return device, nil
-// }

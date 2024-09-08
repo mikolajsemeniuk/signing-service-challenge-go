@@ -179,3 +179,19 @@ func GenerateECDSAWithMarshal() ([]byte, []byte, error) {
 
 	return public, private, nil
 }
+
+func UnmarshalECDSAWithSign(data, private []byte) ([]byte, error) {
+	marshaler := NewECCMarshaler()
+	keyPair, err := marshaler.Unmarshal(private)
+	if err != nil {
+		return nil, err
+	}
+
+	signer := NewECDSASigner(keyPair.Private)
+	signature, err := signer.Sign(data)
+	if err != nil {
+		return nil, err
+	}
+
+	return signature, nil
+}

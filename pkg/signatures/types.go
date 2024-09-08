@@ -2,6 +2,7 @@ package signatures
 
 import (
 	"encoding/json"
+	"time"
 
 	"github.com/google/uuid"
 )
@@ -28,10 +29,17 @@ func (a *Algorithm) UnmarshalJSON(data []byte) error {
 }
 
 type Device struct {
-	Key        uuid.UUID `json:"key"`
-	PublicKey  []byte    `json:"publicKey"`
-	PrivateKey []byte    `json:"privateKey"`
-	Algorithm  Algorithm `json:"algorithm"`
-	Label      string    `json:"label"`
-	Counter    int64     `json:"counter"`
+	Key          uuid.UUID
+	PublicKey    []byte
+	PrivateKey   []byte
+	Algorithm    Algorithm
+	Label        string
+	Counter      int64
+	Transactions []Transaction
+}
+
+type Transaction struct {
+	Signature  string    `json:"signature"`
+	SignedData string    `json:"signedData"`
+	Created    time.Time `json:"created"`
 }
