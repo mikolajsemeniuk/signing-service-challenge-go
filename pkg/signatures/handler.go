@@ -13,6 +13,11 @@ type Storage interface {
 	// SignTransaction(deviceKey uuid.UUID, data string) (Device, error)
 }
 
+type Signer interface {
+	Keys() ([]byte, []byte, error)
+	Sign(dataToBeSigned []byte) ([]byte, error)
+}
+
 type Handler struct {
 	mux     *http.ServeMux
 	storage Storage
