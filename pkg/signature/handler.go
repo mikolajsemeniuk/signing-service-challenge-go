@@ -48,13 +48,13 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 // ListDevices serves all currently stored devices.
 func (h *Handler) ListDevices(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-
 	devices, err := h.storage.ListDevices(r.Context())
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
+
+	w.Header().Set("Content-Type", "application/json")
 
 	if err := json.NewEncoder(w).Encode(devices); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
@@ -64,8 +64,6 @@ func (h *Handler) ListDevices(w http.ResponseWriter, r *http.Request) {
 
 // FindDevice serves device with given by user key.
 func (h *Handler) FindDevice(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-
 	key, err := uuid.Parse(r.PathValue("key"))
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
@@ -82,6 +80,8 @@ func (h *Handler) FindDevice(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
+
+	w.Header().Set("Content-Type", "application/json")
 
 	if err := json.NewEncoder(w).Encode(device); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
