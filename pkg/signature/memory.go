@@ -65,7 +65,7 @@ func (m *Memory) FindDevice(_ context.Context, key uuid.UUID) (Device, error) {
 type CreateDeviceInput struct {
 	Key       uuid.UUID
 	Algorithm Algorithm
-	Label     string
+	Label     Label
 }
 
 // CreateDevice creates a new device in the memory store.
@@ -104,7 +104,7 @@ func (m *Memory) CreateDevice(ctx context.Context, input CreateDeviceInput) (Dev
 // CreateTransactionInput holds the input data for creating a new transaction.
 type CreateTransactionInput struct {
 	DeviceKey uuid.UUID
-	Data      string
+	Data      Data
 }
 
 // CreateTransaction creates a new transaction associated with a device and updates the device state.
@@ -122,7 +122,7 @@ func (m *Memory) CreateTransaction(ctx context.Context, input CreateTransactionI
 		previous = device.Transactions[len(device.Transactions)-1].Signature
 	}
 
-	data := strconv.FormatInt(device.Counter, 10) + "." + input.Data + "." + previous
+	data := strconv.FormatInt(device.Counter, 10) + "." + string(input.Data) + "." + previous
 
 	sign := cryptic.UnmarshalECDSAWithSign
 	if device.Algorithm == RSA {

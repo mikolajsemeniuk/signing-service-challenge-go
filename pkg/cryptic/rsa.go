@@ -7,6 +7,7 @@ import (
 	"crypto/sha256"
 	"crypto/x509"
 	"encoding/pem"
+	"fmt"
 )
 
 // RSAKeyPair is a DTO that holds RSA private and public keys.
@@ -28,7 +29,7 @@ func (g *RSAGenerator) Generate() (*RSAKeyPair, error) {
 
 	key, err := rsa.GenerateKey(rand.Reader, bits)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("error generating rsa key: %w", err)
 	}
 
 	return &RSAKeyPair{
@@ -70,7 +71,7 @@ func (m *RSAMarshaler) Unmarshal(privateKeyBytes []byte) (*RSAKeyPair, error) {
 
 	privateKey, err := x509.ParsePKCS1PrivateKey(block.Bytes)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("error parsing PKCS1 private key: %w", err)
 	}
 
 	pair := &RSAKeyPair{Private: privateKey, Public: &privateKey.PublicKey}
@@ -94,7 +95,7 @@ func (s *RSASigner) Sign(dataToBeSigned []byte) ([]byte, error) {
 
 	signature, err := rsa.SignPKCS1v15(rand.Reader, s.privateKey, crypto.SHA256, hashed[:])
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("error signing rsa PKCS1v15: %w", err)
 	}
 
 	return signature, nil

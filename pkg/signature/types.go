@@ -6,6 +6,7 @@ package signature
 import (
 	"encoding/json"
 	"fmt"
+	"unicode/utf8"
 
 	"github.com/google/uuid"
 )
@@ -18,16 +19,54 @@ const (
 )
 
 func (a *Algorithm) UnmarshalJSON(data []byte) error {
-	var v string
-	if err := json.Unmarshal(data, &v); err != nil {
-		return fmt.Errorf("failed to unmarshal Algorithm: %w", err)
+	var name string
+	if err := json.Unmarshal(data, &name); err != nil {
+		return fmt.Errorf("error unmarshalling Algorithm: %w", err)
 	}
 
-	if v != "ECC" && v != "RSA" {
+	if name != "ECC" && name != "RSA" {
 		return ErrInvalidAlgorithm
 	}
 
-	*a = Algorithm(v)
+	*a = Algorithm(name)
+
+	return nil
+}
+
+type Label string
+
+func (l *Label) UnmarshalJSON(data []byte) error {
+	var name string
+	if err := json.Unmarshal(data, &name); err != nil {
+		return fmt.Errorf("error unmarshalling Data: %w", err)
+	}
+
+	count := utf8.RuneCountInString(name)
+	limit := 255
+
+	if count > limit {
+		return ErrLabelTooLong
+	}
+
+	*l = Label(name)
+
+	return nil
+}
+
+type Data string
+
+func (d *Data) UnmarshalJSON(data []byte) error {
+	var value string
+	if err := json.Unmarshal(data, &value); err != nil {
+		return fmt.Errorf("error unmarshalling Data: %w", err)
+	}
+
+	count := utf8.RuneCountInString(value)
+	if count < 2 || count > 1024 {
+		return ErrDataIncorrectSize
+	}
+
+	*d = Data(value)
 
 	return nil
 }
@@ -37,7 +76,7 @@ type Device struct {
 	PublicKey    []byte        `json:"publicKey"`
 	PrivateKey   []byte        `json:"privateKey"`
 	Algorithm    Algorithm     `json:"algorithm"`
-	Label        string        `json:"label"`
+	Label        Label         `json:"label"`
 	Counter      int64         `json:"counter"`
 	Transactions []Transaction `json:"transactions"`
 }

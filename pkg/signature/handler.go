@@ -89,18 +89,14 @@ func (h *Handler) FindDevice(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// CreateDeviceRequest holds input from user.
-type CreateDeviceRequest struct {
-	Key       uuid.UUID `json:"key"`
-	Algorithm Algorithm `json:"algorithm"`
-	Label     string    `json:"label"`
-}
-
 // CreateDevice saves device to datastore.
 func (h *Handler) CreateDevice(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
+	var body struct {
+		Key       uuid.UUID `json:"key"`
+		Algorithm Algorithm `json:"algorithm"`
+		Label     Label     `json:"label"`
+	}
 
-	var body CreateDeviceRequest
 	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
@@ -112,23 +108,22 @@ func (h *Handler) CreateDevice(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusCreated)
+
 	if err := json.NewEncoder(w).Encode(device); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 }
 
-// CreateTransactionRequest holds input from user.
-type CreateTransactionRequest struct {
-	DeviceKey uuid.UUID `json:"deviceKey"`
-	Data      string    `json:"data"`
-}
-
 // CreateTransaction saves transaction and modify device within.
 func (h *Handler) CreateTransaction(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
+	var body struct {
+		DeviceKey uuid.UUID `json:"deviceKey"`
+		Data      Data      `json:"data"`
+	}
 
-	var body CreateTransactionRequest
 	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
@@ -144,6 +139,9 @@ func (h *Handler) CreateTransaction(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusCreated)
 
 	if err := json.NewEncoder(w).Encode(transaction); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)

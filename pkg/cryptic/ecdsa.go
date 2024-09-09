@@ -7,6 +7,7 @@ import (
 	"crypto/sha256"
 	"crypto/x509"
 	"encoding/pem"
+	"fmt"
 )
 
 // ECCKeyPair is a DTO that holds ECC private and public keys.
@@ -28,7 +29,7 @@ func (g *ECCGenerator) Generate() (*ECCKeyPair, error) {
 	// Security has been ignored for the sake of simplicity.
 	key, err := ecdsa.GenerateKey(elliptic.P384(), rand.Reader)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("error generating ecdsa key: %w", err)
 	}
 
 	return &ECCKeyPair{
@@ -50,13 +51,13 @@ func NewECCMarshaler() ECCMarshaler {
 func (m ECCMarshaler) Marshal(keyPair ECCKeyPair) ([]byte, []byte, error) {
 	privateKeyBytes, err := x509.MarshalECPrivateKey(keyPair.Private)
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, fmt.Errorf("error marshal ec x509 private key: %w", err)
 	}
 
 	// Pass the public key directly, without the extra pointer
 	publicKeyBytes, err := x509.MarshalPKIXPublicKey(keyPair.Public)
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, fmt.Errorf("error marshal pkix x509 public key: %w", err)
 	}
 
 	encodedPrivate := pem.EncodeToMemory(&pem.Block{
@@ -78,7 +79,7 @@ func (m ECCMarshaler) Unmarshal(privateKeyBytes []byte) (*ECCKeyPair, error) {
 
 	privateKey, err := x509.ParseECPrivateKey(block.Bytes)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("error parse x509 ec private key: %w", err)
 	}
 
 	return &ECCKeyPair{
@@ -103,7 +104,7 @@ func (s *ECDSASigner) Sign(dataToBeSigned []byte) ([]byte, error) {
 
 	r, sigS, err := ecdsa.Sign(rand.Reader, s.privateKey, hashed[:])
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("error signing ecdsa: %w", err)
 	}
 
 	signature := append(r.Bytes(), sigS.Bytes()...)

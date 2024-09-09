@@ -30,7 +30,7 @@ paths:
             schema:
               $ref: "#/components/schemas/CreateDeviceRequest"
       responses:
-        "200":
+        "201":
           description: Device created successfully
           content:
             application/json:
@@ -73,7 +73,7 @@ paths:
             schema:
               $ref: "#/components/schemas/CreateTransactionRequest"
       responses:
-        "200":
+        "201":
           description: Transaction created successfully
           content:
             application/json:

@@ -92,17 +92,17 @@ func TestHandler_FindDevice(t *testing.T) {
 	err := json.NewDecoder(recorder.Body).Decode(&device)
 	require.NoError(t, err)
 	assert.Equal(t, deviceID, device.Key)
-	assert.Equal(t, "Device Found", device.Label)
+	assert.Equal(t, signature.Label("Device Found"), device.Label)
 }
 
 func TestHandler_CreateDevice(t *testing.T) {
 	t.Parallel()
 
 	deviceID := uuid.New()
-	device := signature.CreateDeviceRequest{
-		Key:       deviceID,
-		Algorithm: signature.ECC,
-		Label:     "Test Device",
+	device := map[string]any{
+		"Key":       deviceID,
+		"Algorithm": signature.ECC,
+		"Label":     "Test Device",
 	}
 
 	store := &storage{
@@ -127,13 +127,13 @@ func TestHandler_CreateDevice(t *testing.T) {
 
 	handler.ServeHTTP(recorder, request)
 
-	assert.Equal(t, http.StatusOK, recorder.Code)
+	assert.Equal(t, http.StatusCreated, recorder.Code)
 
 	var createdDevice signature.Device
 	err = json.NewDecoder(recorder.Body).Decode(&createdDevice)
 	require.NoError(t, err)
 	assert.Equal(t, deviceID, createdDevice.Key)
-	assert.Equal(t, "Test Device", createdDevice.Label)
+	assert.Equal(t, signature.Label("Test Device"), createdDevice.Label)
 	assert.Equal(t, signature.ECC, createdDevice.Algorithm)
 }
 
@@ -141,16 +141,16 @@ func TestHandler_CreateTransaction(t *testing.T) {
 	t.Parallel()
 
 	transactionID := uuid.New()
-	transactionRequest := signature.CreateTransactionRequest{
-		DeviceKey: transactionID,
-		Data:      "Test Data",
+	transactionRequest := map[string]any{
+		"DeviceKey": transactionID,
+		"Data":      "Test Data",
 	}
 
 	store := &storage{
 		createTransaction: func(_ context.Context, input signature.CreateTransactionInput) (signature.Transaction, error) {
 			return signature.Transaction{
 				Signature:  "dummy-signature",
-				SignedData: input.Data,
+				SignedData: string(input.Data),
 			}, nil
 		},
 	}
@@ -167,7 +167,7 @@ func TestHandler_CreateTransaction(t *testing.T) {
 
 	handler.ServeHTTP(recorder, request)
 
-	assert.Equal(t, http.StatusOK, recorder.Code)
+	assert.Equal(t, http.StatusCreated, recorder.Code)
 
 	var createdTransaction signature.Transaction
 	err = json.NewDecoder(recorder.Body).Decode(&createdTransaction)
