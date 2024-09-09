@@ -11,6 +11,7 @@ import (
 	"github.com/google/uuid"
 )
 
+// Algorithm represents the cryptographic algorithm used for the signature device (ECC or RSA).
 type Algorithm string
 
 const (
@@ -33,6 +34,7 @@ func (a *Algorithm) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+// Label represents the label assigned to a signature device, with validation for maximum length (255).
 type Label string
 
 func (l *Label) UnmarshalJSON(data []byte) error {
@@ -53,6 +55,7 @@ func (l *Label) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+// Data represents arbitrary transaction data that is signed, with validation for size limits (2-1024).
 type Data string
 
 func (d *Data) UnmarshalJSON(data []byte) error {
@@ -71,6 +74,7 @@ func (d *Data) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+// Device represents a signature device, which includes cryptographic keys, algorithm, label, counter, and associated transactions.
 type Device struct {
 	Key          uuid.UUID     `json:"key"`
 	PublicKey    []byte        `json:"publicKey"`
@@ -81,6 +85,7 @@ type Device struct {
 	Transactions []Transaction `json:"transactions"`
 }
 
+// Transaction represents a transaction containing signed data and the corresponding signature.
 type Transaction struct {
 	Signature  string `json:"signature"`
 	SignedData string `json:"signedData"`
