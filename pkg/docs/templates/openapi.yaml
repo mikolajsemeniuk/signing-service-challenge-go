@@ -5,7 +5,7 @@ info:
   version: 1.0.0
 
 paths:
-  /signatures/device:
+  /signature/device:
     get:
       summary: List all devices
       operationId: listDevices
@@ -39,7 +39,7 @@ paths:
         "400":
           description: Bad request error
 
-  /signatures/device/{key}:
+  /signature/device/{key}:
     get:
       summary: Find a specific device by key
       operationId: findDevice
@@ -62,7 +62,7 @@ paths:
         "404":
           description: Device not found
 
-  /signatures/transaction:
+  /signature/transaction:
     post:
       summary: Create a new transaction
       operationId: createTransaction

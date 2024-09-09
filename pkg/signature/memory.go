@@ -11,11 +11,13 @@ import (
 	"github.com/google/uuid"
 )
 
+// Memory represents an in-memory storage for devices with concurrency control.
 type Memory struct {
 	mu      *sync.RWMutex
 	Devices map[uuid.UUID]Device
 }
 
+// NewMemory initializes and returns a new Memory instance.
 func NewMemory() *Memory {
 	memory := &Memory{
 		mu:      &sync.RWMutex{},
@@ -25,6 +27,7 @@ func NewMemory() *Memory {
 	return memory
 }
 
+// ListDevices retrieves a list of all devices from the memory store.
 func (m *Memory) ListDevices(_ context.Context) ([]Device, error) {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
@@ -41,6 +44,7 @@ func (m *Memory) ListDevices(_ context.Context) ([]Device, error) {
 	return devices, nil
 }
 
+// FindDevice finds a device in the memory store by its UUID key.
 func (m *Memory) FindDevice(_ context.Context, key uuid.UUID) (Device, error) {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
@@ -53,12 +57,14 @@ func (m *Memory) FindDevice(_ context.Context, key uuid.UUID) (Device, error) {
 	return device, nil
 }
 
+// CreateDeviceInput holds the input data for creating a new device.
 type CreateDeviceInput struct {
 	Key       uuid.UUID
 	Algorithm Algorithm
 	Label     string
 }
 
+// CreateDevice creates a new device in the memory store.
 func (m *Memory) CreateDevice(ctx context.Context, input CreateDeviceInput) (Device, error) {
 	if _, err := m.FindDevice(ctx, input.Key); !errors.Is(err, ErrDeviceNotFound) {
 		return Device{}, ErrDeviceAlreadyExists
@@ -91,11 +97,13 @@ func (m *Memory) CreateDevice(ctx context.Context, input CreateDeviceInput) (Dev
 	return device, nil
 }
 
+// CreateTransactionInput holds the input data for creating a new transaction.
 type CreateTransactionInput struct {
 	DeviceKey uuid.UUID
 	Data      string
 }
 
+// CreateTransaction creates a new transaction associated with a device and updates the device state.
 func (m *Memory) CreateTransaction(ctx context.Context, input CreateTransactionInput) (Transaction, error) {
 	device, err := m.FindDevice(ctx, input.DeviceKey)
 	if err != nil {

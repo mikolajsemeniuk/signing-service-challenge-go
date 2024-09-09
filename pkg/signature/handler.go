@@ -64,7 +64,9 @@ func (h *Handler) ListDevices(w http.ResponseWriter, r *http.Request) {
 
 // FindDevice serves device with given by user key.
 func (h *Handler) FindDevice(w http.ResponseWriter, r *http.Request) {
-	key, err := uuid.Parse(r.URL.Query().Get("key"))
+	w.Header().Set("Content-Type", "application/json")
+
+	key, err := uuid.Parse(r.PathValue("key"))
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
@@ -87,7 +89,7 @@ func (h *Handler) FindDevice(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// CreateDeviceRequest can encode and decode an ECC key pair.
+// CreateDeviceRequest holds input from user.
 type CreateDeviceRequest struct {
 	Key       uuid.UUID `json:"key"`
 	Algorithm Algorithm `json:"algorithm"`
@@ -96,6 +98,8 @@ type CreateDeviceRequest struct {
 
 // CreateDevice saves device to datastore.
 func (h *Handler) CreateDevice(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+
 	if r.Body == nil {
 		http.Error(w, ErrEmptyJSONBody.Error(), http.StatusBadRequest)
 		return
@@ -107,17 +111,30 @@ func (h *Handler) CreateDevice(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if _, err := h.storage.CreateDevice(r.Context(), CreateDeviceInput(body)); err != nil {
+	device, err := h.storage.CreateDevice(r.Context(), CreateDeviceInput(body))
+	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
+
+	response, err := json.Marshal(device)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	if _, err := w.Write(response); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+	}
 }
 
+// CreateTransactionRequest holds input from user.
 type CreateTransactionRequest struct {
 	DeviceKey uuid.UUID `json:"deviceKey"`
 	Data      string    `json:"data"`
 }
 
+// CreateTransactionResponse holds user's response.
 type CreateTransactionResponse struct {
 	Signature  string `json:"signature"`
 	SignedData string `json:"signedData"`
@@ -125,6 +142,8 @@ type CreateTransactionResponse struct {
 
 // CreateTransaction saves transaction and modify device within.
 func (h *Handler) CreateTransaction(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+
 	if r.Body == nil {
 		http.Error(w, ErrEmptyJSONBody.Error(), http.StatusBadRequest)
 		return

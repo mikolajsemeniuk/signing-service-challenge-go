@@ -22,14 +22,16 @@ type config struct {
 
 func main() {
 	var config config
-	envconfig.MustProcess("", &config)
+	if err := envconfig.Process("", &config); err != nil {
+		log.Fatal(err)
+	}
 
 	storage := signature.NewMemory()
 
 	router := http.NewServeMux()
 
 	router.Handle("/", docs.NewHandler())
-	router.Handle("/signatures/", http.StripPrefix("/signatures", signature.NewHandler(storage)))
+	router.Handle("/signature/", http.StripPrefix("/signature", signature.NewHandler(storage)))
 
 	server := &http.Server{
 		Addr:         config.Listen,
