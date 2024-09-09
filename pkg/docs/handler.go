@@ -31,12 +31,10 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 // Elements serves elements ui.
 func (h *Handler) Elements(w http.ResponseWriter, _ *http.Request) {
-	template.Must(template.New("ui").Parse(elements)).Execute(w, "./docs")
+	template.Must(template.New("elements").Parse(elements)).Execute(w, "./docs")
 }
 
 // Elements serves specification in OpenAPI standard.
 func (h *Handler) OpenAPI(w http.ResponseWriter, _ *http.Request) {
-	if _, err := w.Write(docs); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-	}
+	template.Must(template.New("docs").Parse(docs)).Execute(w, nil)
 }

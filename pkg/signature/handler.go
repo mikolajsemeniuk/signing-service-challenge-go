@@ -56,14 +56,9 @@ func (h *Handler) ListDevices(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	response, err := json.Marshal(devices)
-	if err != nil {
+	if err := json.NewEncoder(w).Encode(devices); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
-	}
-
-	if _, err := w.Write(response); err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
 	}
 }
 
@@ -88,14 +83,9 @@ func (h *Handler) FindDevice(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	response, err := json.Marshal(device)
-	if err != nil {
+	if err := json.NewEncoder(w).Encode(device); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
-	}
-
-	if _, err := w.Write(response); err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
 	}
 }
 
@@ -110,11 +100,6 @@ type CreateDeviceRequest struct {
 func (h *Handler) CreateDevice(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
-	if r.Body == nil {
-		http.Error(w, ErrEmptyJSONBody.Error(), http.StatusBadRequest)
-		return
-	}
-
 	var body CreateDeviceRequest
 	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
@@ -127,14 +112,9 @@ func (h *Handler) CreateDevice(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	response, err := json.Marshal(device)
-	if err != nil {
+	if err := json.NewEncoder(w).Encode(device); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
-	}
-
-	if _, err := w.Write(response); err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
 	}
 }
 
@@ -154,11 +134,6 @@ type CreateTransactionResponse struct {
 func (h *Handler) CreateTransaction(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
-	if r.Body == nil {
-		http.Error(w, ErrEmptyJSONBody.Error(), http.StatusBadRequest)
-		return
-	}
-
 	var body CreateTransactionRequest
 	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
@@ -176,13 +151,8 @@ func (h *Handler) CreateTransaction(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	response, err := json.Marshal(transaction)
-	if err != nil {
+	if err := json.NewEncoder(w).Encode(transaction); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
-	}
-
-	if _, err := w.Write(response); err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
 	}
 }
