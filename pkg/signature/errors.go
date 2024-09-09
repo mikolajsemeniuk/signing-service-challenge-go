@@ -1,4 +1,4 @@
-package signatures
+package signature
 
 import "errors"
 

@@ -1,4 +1,4 @@
-package crypto
+package cryptic
 
 import (
 	"crypto/ecdsa"
@@ -86,6 +86,7 @@ func (m ECCMarshaler) Unmarshal(privateKeyBytes []byte) (*ECCKeyPair, error) {
 	}, nil
 }
 
+// ECDSASigner signs data using ECDSA with a private key.
 type ECDSASigner struct {
 	privateKey *ecdsa.PrivateKey
 }
@@ -109,6 +110,7 @@ func (s *ECDSASigner) Sign(dataToBeSigned []byte) ([]byte, error) {
 	return signature, nil
 }
 
+// GenerateECDSAWithMarshal generates a new ECC key pair, marshals it to PEM format, and returns the public and private keys.
 func GenerateECDSAWithMarshal() ([]byte, []byte, error) {
 	generator := NewECCGenerator()
 	keyPair, err := generator.Generate()
@@ -125,6 +127,7 @@ func GenerateECDSAWithMarshal() ([]byte, []byte, error) {
 	return public, private, nil
 }
 
+// UnmarshalECDSAWithSign unmarshal the private key, signs the data using the corresponding ECDSA key, and returns the signature.
 func UnmarshalECDSAWithSign(data, private []byte) ([]byte, error) {
 	marshaler := NewECCMarshaler()
 	keyPair, err := marshaler.Unmarshal(private)

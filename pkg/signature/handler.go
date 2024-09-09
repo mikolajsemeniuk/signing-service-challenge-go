@@ -1,4 +1,4 @@
-package signatures
+package signature
 
 import (
 	"context"
@@ -8,6 +8,7 @@ import (
 	"github.com/google/uuid"
 )
 
+// Storage defines an interface for device and transaction operations.
 type Storage interface {
 	ListDevices(ctx context.Context) ([]Device, error)
 	FindDevice(ctx context.Context, key uuid.UUID) (Device, error)
@@ -15,6 +16,7 @@ type Storage interface {
 	CreateTransaction(ctx context.Context, input CreateTransactionInput) (Transaction, error)
 }
 
+// NewHandler creates a new HTTP handler with routing.
 func NewHandler(s Storage) *Handler {
 	router := http.NewServeMux()
 
@@ -39,6 +41,7 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	h.router.ServeHTTP(w, r)
 }
 
+// ListDevices serves all currently stored devices.
 func (h *Handler) ListDevices(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
@@ -59,6 +62,7 @@ func (h *Handler) ListDevices(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// FindDevice serves device with given by user key.
 func (h *Handler) FindDevice(w http.ResponseWriter, r *http.Request) {
 	key, err := uuid.Parse(r.URL.Query().Get("key"))
 	if err != nil {
@@ -83,12 +87,14 @@ func (h *Handler) FindDevice(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// CreateDeviceRequest can encode and decode an ECC key pair.
 type CreateDeviceRequest struct {
 	Key       uuid.UUID `json:"key"`
 	Algorithm Algorithm `json:"algorithm"`
 	Label     string    `json:"label"`
 }
 
+// CreateDevice saves device to datastore.
 func (h *Handler) CreateDevice(w http.ResponseWriter, r *http.Request) {
 	if r.Body == nil {
 		http.Error(w, ErrEmptyJSONBody.Error(), http.StatusBadRequest)
@@ -117,6 +123,7 @@ type CreateTransactionResponse struct {
 	SignedData string `json:"signedData"`
 }
 
+// CreateTransaction saves transaction and modify device within.
 func (h *Handler) CreateTransaction(w http.ResponseWriter, r *http.Request) {
 	if r.Body == nil {
 		http.Error(w, ErrEmptyJSONBody.Error(), http.StatusBadRequest)

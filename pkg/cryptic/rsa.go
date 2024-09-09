@@ -1,4 +1,4 @@
-package crypto
+package cryptic
 
 import (
 	"crypto"
@@ -98,6 +98,7 @@ func (s *RSASigner) Sign(dataToBeSigned []byte) ([]byte, error) {
 	return signature, nil
 }
 
+// GenerateRSAWithMarshal generates an RSA key pair, marshals it into PEM format, and returns the public and private keys.
 func GenerateRSAWithMarshal() ([]byte, []byte, error) {
 	generator := NewRSAGenerator()
 	keyPair, err := generator.Generate()
@@ -114,6 +115,7 @@ func GenerateRSAWithMarshal() ([]byte, []byte, error) {
 	return public, private, nil
 }
 
+// UnmarshalRSAWithSign unmarshal the private key, signs the data using the corresponding RSA key, and returns the signature.
 func UnmarshalRSAWithSign(data, private []byte) ([]byte, error) {
 	marshaler := NewRSAMarshaler()
 	keyPair, err := marshaler.Unmarshal(private)

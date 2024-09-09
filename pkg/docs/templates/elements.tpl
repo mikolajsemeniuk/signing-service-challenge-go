@@ -10,7 +10,7 @@
 </head>
 
 <body>
-    <elements-api apiDescriptionUrl="{{ . }}" router="hash" />
+    <elements-api apiDescriptionUrl="./docs" apiBaseUrl="/signatures" router="hash" />
 </body>
 
 </html>

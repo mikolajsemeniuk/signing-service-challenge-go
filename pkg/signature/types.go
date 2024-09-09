@@ -1,4 +1,4 @@
-package signatures
+package signature
 
 import (
 	"encoding/json"
@@ -30,13 +30,13 @@ func (a *Algorithm) UnmarshalJSON(data []byte) error {
 }
 
 type Device struct {
-	Key          uuid.UUID
-	PublicKey    []byte
-	PrivateKey   []byte
-	Algorithm    Algorithm
-	Label        string
-	Counter      int64
-	Transactions []Transaction
+	Key          uuid.UUID     `json:"key"`
+	PublicKey    []byte        `json:"publicKey"`
+	PrivateKey   []byte        `json:"privateKey"`
+	Algorithm    Algorithm     `json:"algorithm"`
+	Label        string        `json:"label"`
+	Counter      int64         `json:"counter"`
+	Transactions []Transaction `json:"transactions"`
 }
 
 type Transaction struct {

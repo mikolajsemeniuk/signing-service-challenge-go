@@ -5,6 +5,7 @@ import (
 	"net/http"
 )
 
+// NewHandler creates a new HTTP handler with routing.
 func NewHandler() *Handler {
 	router := http.NewServeMux()
 
@@ -26,11 +27,13 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 }
 
 // Elements serves elements ui.
-func (h *Handler) Elements(w http.ResponseWriter, r *http.Request) {
+func (h *Handler) Elements(w http.ResponseWriter, _ *http.Request) {
 	template.Must(template.New("ui").Parse(elements)).Execute(w, "./docs")
 }
 
 // Elements serves specification in OpenAPI standard.
-func (h *Handler) OpenAPI(w http.ResponseWriter, r *http.Request) {
-	w.Write(docs)
+func (h *Handler) OpenAPI(w http.ResponseWriter, _ *http.Request) {
+	if _, err := w.Write(docs); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
 }

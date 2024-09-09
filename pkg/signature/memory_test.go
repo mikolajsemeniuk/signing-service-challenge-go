@@ -1,11 +1,11 @@
-package signatures_test
+package signature_test
 
 import (
 	"context"
 	"testing"
 
-	"github.com/fiskaly/coding-challenges/signing-service-challenge/pkg/crypto"
-	"github.com/fiskaly/coding-challenges/signing-service-challenge/pkg/signatures"
+	"github.com/fiskaly/coding-challenges/signing-service-challenge/pkg/cryptic"
+	"github.com/fiskaly/coding-challenges/signing-service-challenge/pkg/signature"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -14,9 +14,9 @@ import (
 func TestFindDevice(t *testing.T) {
 	t.Parallel()
 
-	store := signatures.NewMemory()
+	store := signature.NewMemory()
 	key := uuid.New()
-	expected := signatures.Device{Key: key, Label: "Test Device"}
+	expected := signature.Device{Key: key, Label: "Test Device"}
 	store.Devices[key] = expected
 
 	t.Run("Find existing device", func(t *testing.T) {
@@ -34,24 +34,24 @@ func TestFindDevice(t *testing.T) {
 		device, err := store.FindDevice(context.Background(), uuid.New())
 
 		require.Error(t, err)
-		assert.Equal(t, signatures.ErrDeviceNotFound, err)
-		assert.Equal(t, signatures.Device{}, device)
+		assert.Equal(t, signature.ErrDeviceNotFound, err)
+		assert.Equal(t, signature.Device{}, device)
 	})
 }
 
 func TestCreateDevice(t *testing.T) {
 	t.Parallel()
 
-	store := signatures.NewMemory()
+	store := signature.NewMemory()
 	ctx := context.Background()
 
 	t.Run("Successful ECDSA device creation", func(t *testing.T) {
 		t.Parallel()
 
 		deviceID := uuid.New()
-		input := signatures.CreateDeviceInput{
+		input := signature.CreateDeviceInput{
 			Key:       deviceID,
-			Algorithm: signatures.ECC,
+			Algorithm: signature.ECC,
 			Label:     "Test ECDSA Device",
 		}
 
@@ -60,7 +60,7 @@ func TestCreateDevice(t *testing.T) {
 
 		require.NoError(t, err)
 		assert.Equal(t, deviceID, device.Key)
-		assert.Equal(t, signatures.ECC, device.Algorithm)
+		assert.Equal(t, signature.ECC, device.Algorithm)
 		assert.Equal(t, "Test ECDSA Device", device.Label)
 		assert.True(t, exists)
 		assert.Equal(t, device, storedDevice)
@@ -70,9 +70,9 @@ func TestCreateDevice(t *testing.T) {
 		t.Parallel()
 
 		deviceID := uuid.New()
-		input := signatures.CreateDeviceInput{
+		input := signature.CreateDeviceInput{
 			Key:       deviceID,
-			Algorithm: signatures.RSA,
+			Algorithm: signature.RSA,
 			Label:     "Test RSA Device",
 		}
 
@@ -82,7 +82,7 @@ func TestCreateDevice(t *testing.T) {
 		// Assertions
 		require.NoError(t, err)
 		assert.Equal(t, deviceID, device.Key)
-		assert.Equal(t, signatures.RSA, device.Algorithm)
+		assert.Equal(t, signature.RSA, device.Algorithm)
 		assert.Equal(t, "Test RSA Device", device.Label)
 		assert.True(t, exists)
 		assert.Equal(t, device, storedDevice)
@@ -92,15 +92,15 @@ func TestCreateDevice(t *testing.T) {
 func TestCreateTransaction(t *testing.T) {
 	t.Parallel()
 
-	store := signatures.NewMemory()
+	store := signature.NewMemory()
 	ctx := context.Background()
 	deviceID := uuid.New()
 
-	_, private, _ := crypto.GenerateECDSAWithMarshal()
+	_, private, _ := cryptic.GenerateECDSAWithMarshal()
 
-	device := signatures.Device{
+	device := signature.Device{
 		Key:        deviceID,
-		Algorithm:  signatures.ECC,
+		Algorithm:  signature.ECC,
 		Counter:    0,
 		Label:      "Test ECDSA Device",
 		PrivateKey: private,
@@ -110,7 +110,7 @@ func TestCreateTransaction(t *testing.T) {
 	t.Run("Successful transaction creation", func(t *testing.T) {
 		t.Parallel()
 
-		input := signatures.CreateTransactionInput{
+		input := signature.CreateTransactionInput{
 			DeviceKey: deviceID,
 			Data:      "transaction-data",
 		}
@@ -127,14 +127,14 @@ func TestCreateTransaction(t *testing.T) {
 		t.Parallel()
 
 		nonExistentDeviceID := uuid.New()
-		input := signatures.CreateTransactionInput{
+		input := signature.CreateTransactionInput{
 			DeviceKey: nonExistentDeviceID,
 			Data:      "transaction-data",
 		}
 		transaction, err := store.CreateTransaction(ctx, input)
 
 		require.Error(t, err)
-		assert.Equal(t, signatures.ErrDeviceNotFound, err)
-		assert.Equal(t, signatures.Transaction{}, transaction)
+		assert.Equal(t, signature.ErrDeviceNotFound, err)
+		assert.Equal(t, signature.Transaction{}, transaction)
 	})
 }

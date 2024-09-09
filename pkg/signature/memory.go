@@ -1,4 +1,4 @@
-package signatures
+package signature
 
 import (
 	"context"
@@ -7,7 +7,7 @@ import (
 	"strconv"
 	"sync"
 
-	"github.com/fiskaly/coding-challenges/signing-service-challenge/pkg/crypto"
+	"github.com/fiskaly/coding-challenges/signing-service-challenge/pkg/cryptic"
 	"github.com/google/uuid"
 )
 
@@ -67,9 +67,9 @@ func (m *Memory) CreateDevice(ctx context.Context, input CreateDeviceInput) (Dev
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
-	keys := crypto.GenerateECDSAWithMarshal
+	keys := cryptic.GenerateECDSAWithMarshal
 	if input.Algorithm == RSA {
-		keys = crypto.GenerateRSAWithMarshal
+		keys = cryptic.GenerateRSAWithMarshal
 	}
 
 	public, private, err := keys()
@@ -112,9 +112,9 @@ func (m *Memory) CreateTransaction(ctx context.Context, input CreateTransactionI
 
 	data := strconv.FormatInt(device.Counter, 10) + "." + input.Data + "." + previous
 
-	sign := crypto.UnmarshalECDSAWithSign
+	sign := cryptic.UnmarshalECDSAWithSign
 	if device.Algorithm == RSA {
-		sign = crypto.UnmarshalRSAWithSign
+		sign = cryptic.UnmarshalRSAWithSign
 	}
 
 	signature, err := sign([]byte(data), device.PrivateKey)
