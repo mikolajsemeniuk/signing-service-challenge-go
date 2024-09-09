@@ -124,12 +124,6 @@ type CreateTransactionRequest struct {
 	Data      string    `json:"data"`
 }
 
-// CreateTransactionResponse holds user's response.
-type CreateTransactionResponse struct {
-	Signature  string `json:"signature"`
-	SignedData string `json:"signedData"`
-}
-
 // CreateTransaction saves transaction and modify device within.
 func (h *Handler) CreateTransaction(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
