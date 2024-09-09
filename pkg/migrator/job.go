@@ -13,45 +13,26 @@ import (
 	"fmt"
 
 	"github.com/golang-migrate/migrate/v4"
-	_ "github.com/golang-migrate/migrate/v4/database/postgres"
 	"github.com/golang-migrate/migrate/v4/source/iofs"
-	_ "github.com/joho/godotenv/autoload"
-	"github.com/kelseyhightower/envconfig"
 )
 
 //go:embed migrations/*.sql
 var migrations embed.FS
 
-type config struct {
-	User     string `envconfig:"USER"     required:"true"`
-	Password string `envconfig:"PASSWORD" required:"true"`
-	Host     string `envconfig:"HOST"     required:"true"`
-	Database string `envconfig:"DATABASE" required:"true"`
-	SSL      string `envconfig:"SSL"      required:"true"`
-	Version  uint   `envconfig:"VERSION"  required:"true"`
-}
-
-func Migrate() error {
-	var config config
-	if err := envconfig.Process("PSQL", &config); err != nil {
-		return err
-	}
-
+func Migrate(source string, version uint) error {
 	driver, err := iofs.New(migrations, "migrations")
 	if err != nil {
-		return err
+		return fmt.Errorf("error creating migration driver: %w", err)
 	}
-
-	source := fmt.Sprintf("postgres://%s:%s@%s/%s?sslmode=%s", config.User, config.Password, config.Host, config.Database, config.SSL)
 
 	migration, err := migrate.NewWithSourceInstance("iofs", driver, source)
 	if err != nil {
-		return err
+		return fmt.Errorf("error creating migration instance: %w", err)
 	}
 	defer migration.Close()
 
-	if err = migration.Migrate(config.Version); err != nil && !errors.Is(err, migrate.ErrNoChange) {
-		return err
+	if err = migration.Migrate(version); err != nil && !errors.Is(err, migrate.ErrNoChange) {
+		return fmt.Errorf("error running migration: %w", err)
 	}
 
 	return nil
