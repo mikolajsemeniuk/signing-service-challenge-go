@@ -10,12 +10,14 @@ import (
 
 func TestECDSA(t *testing.T) {
 	generator := crypto.NewECCGenerator()
+
 	keyPair, err := generator.Generate()
 	if err != nil {
 		log.Fatalf("Failed to generate key pair: %v", err)
 	}
 
 	marshaler := crypto.NewECCMarshaler()
+
 	public, private, err := marshaler.Marshal(*keyPair)
 	if err != nil {
 		log.Fatalf("Failed to encode ECC key pair: %v", err)

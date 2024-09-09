@@ -3,33 +3,49 @@ package signatures
 import (
 	"context"
 	"encoding/base64"
+	"errors"
+	"strconv"
 	"sync"
-	"time"
 
 	"github.com/fiskaly/coding-challenges/signing-service-challenge/pkg/crypto"
 	"github.com/google/uuid"
 )
 
 type Memory struct {
-	mu           *sync.RWMutex
-	devices      map[uuid.UUID]Device
-	transactions []Transaction
+	mu      *sync.RWMutex
+	Devices map[uuid.UUID]Device
 }
 
 func NewMemory() *Memory {
 	memory := &Memory{
 		mu:      &sync.RWMutex{},
-		devices: map[uuid.UUID]Device{},
+		Devices: map[uuid.UUID]Device{},
 	}
 
 	return memory
 }
 
-func (m *Memory) FindDevice(ctx context.Context, key uuid.UUID) (Device, error) {
+func (m *Memory) ListDevices(_ context.Context) ([]Device, error) {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
 
-	device, exists := m.devices[key]
+	var i int
+
+	devices := make([]Device, len(m.Devices))
+
+	for _, v := range m.Devices {
+		devices[i] = v
+		i++
+	}
+
+	return devices, nil
+}
+
+func (m *Memory) FindDevice(_ context.Context, key uuid.UUID) (Device, error) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+
+	device, exists := m.Devices[key]
 	if !exists {
 		return device, ErrDeviceNotFound
 	}
@@ -44,6 +60,10 @@ type CreateDeviceInput struct {
 }
 
 func (m *Memory) CreateDevice(ctx context.Context, input CreateDeviceInput) (Device, error) {
+	if _, err := m.FindDevice(ctx, input.Key); !errors.Is(err, ErrDeviceNotFound) {
+		return Device{}, ErrDeviceAlreadyExists
+	}
+
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
@@ -58,25 +78,26 @@ func (m *Memory) CreateDevice(ctx context.Context, input CreateDeviceInput) (Dev
 	}
 
 	device := Device{
-		Key:        input.Key,
-		Algorithm:  input.Algorithm,
-		PublicKey:  public,
-		PrivateKey: private,
-		Label:      input.Label,
+		Key:          input.Key,
+		Algorithm:    input.Algorithm,
+		PublicKey:    public,
+		PrivateKey:   private,
+		Label:        input.Label,
+		Transactions: []Transaction{},
 	}
 
-	m.devices[input.Key] = device
+	m.Devices[input.Key] = device
 
 	return device, nil
 }
 
 type CreateTransactionInput struct {
-	DeviceID uuid.UUID
-	Data     string
+	DeviceKey uuid.UUID
+	Data      string
 }
 
 func (m *Memory) CreateTransaction(ctx context.Context, input CreateTransactionInput) (Transaction, error) {
-	device, err := m.FindDevice(ctx, input.DeviceID)
+	device, err := m.FindDevice(ctx, input.DeviceKey)
 	if err != nil {
 		return Transaction{}, err
 	}
@@ -84,12 +105,12 @@ func (m *Memory) CreateTransaction(ctx context.Context, input CreateTransactionI
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
-	lastSignature := base64.StdEncoding.EncodeToString([]byte(device.Key.String()))
+	previous := base64.StdEncoding.EncodeToString([]byte(device.Key.String()))
 	if device.Counter > 0 {
-		lastSignature = device.Transactions[len(device.Transactions)-1].Signature
+		previous = device.Transactions[len(device.Transactions)-1].Signature
 	}
 
-	data := string(device.Counter) + "." + input.Data + "." + lastSignature
+	data := strconv.FormatInt(device.Counter, 10) + "." + input.Data + "." + previous
 
 	sign := crypto.UnmarshalECDSAWithSign
 	if device.Algorithm == RSA {
@@ -104,13 +125,12 @@ func (m *Memory) CreateTransaction(ctx context.Context, input CreateTransactionI
 	transaction := Transaction{
 		Signature:  string(signature),
 		SignedData: data,
-		Created:    time.Now(),
 	}
 
 	device.Transactions = append(device.Transactions, transaction)
-	device.Counter += 1
+	device.Counter++
 
-	m.devices[device.Key] = device
+	m.Devices[device.Key] = device
 
 	return transaction, nil
 }

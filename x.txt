@@ -20,3 +20,5 @@ curl -X POST http://localhost:8080/signatures/transaction \
            "deviceID": "62588c2e-673b-4e71-9241-5705ca4aeaee",
            "data": "your-data-here"
          }'
+
+golangci-lint run pkg/signatures

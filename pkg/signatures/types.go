@@ -2,7 +2,7 @@ package signatures
 
 import (
 	"encoding/json"
-	"time"
+	"fmt"
 
 	"github.com/google/uuid"
 )
@@ -17,7 +17,7 @@ const (
 func (a *Algorithm) UnmarshalJSON(data []byte) error {
 	var v string
 	if err := json.Unmarshal(data, &v); err != nil {
-		return err
+		return fmt.Errorf("failed to unmarshal Algorithm: %w", err)
 	}
 
 	if v != "ECC" && v != "RSA" {
@@ -25,6 +25,7 @@ func (a *Algorithm) UnmarshalJSON(data []byte) error {
 	}
 
 	*a = Algorithm(v)
+
 	return nil
 }
 
@@ -39,7 +40,6 @@ type Device struct {
 }
 
 type Transaction struct {
-	Signature  string    `json:"signature"`
-	SignedData string    `json:"signedData"`
-	Created    time.Time `json:"created"`
+	Signature  string `json:"signature"`
+	SignedData string `json:"signedData"`
 }

@@ -1,0 +1,134 @@
+openapi: 3.1.0
+info:
+  title: Signatures API
+  description: API for managing devices and creating transactions.
+  version: 1.0.0
+
+paths:
+  /device:
+    get:
+      summary: List all devices
+      operationId: listDevices
+      responses:
+        "200":
+          description: A list of devices
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Device"
+        "400":
+          description: Bad request error
+    post:
+      summary: Create a new device
+      operationId: createDevice
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateDeviceRequest"
+      responses:
+        "200":
+          description: Device created successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Device"
+        "400":
+          description: Bad request error
+
+  /device/{key}:
+    get:
+      summary: Find a specific device by key
+      operationId: findDevice
+      parameters:
+        - name: key
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Device found successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Device"
+        "400":
+          description: Bad request error
+        "404":
+          description: Device not found
+
+  /transaction:
+    post:
+      summary: Create a new transaction
+      operationId: createTransaction
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateTransactionRequest"
+      responses:
+        "200":
+          description: Transaction created successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CreateTransactionResponse"
+        "400":
+          description: Bad request error
+
+components:
+  schemas:
+    Algorithm:
+      type: string
+      enum:
+        - ECC
+        - RSA
+
+    Device:
+      type: object
+      properties:
+        key:
+          type: string
+          format: uuid
+        algorithm:
+          $ref: "#/components/schemas/Algorithm"
+        label:
+          type: string
+        publicKey:
+          type: string
+        privateKey:
+          type: string
+
+    CreateDeviceRequest:
+      type: object
+      properties:
+        key:
+          type: string
+          format: uuid
+        algorithm:
+          $ref: "#/components/schemas/Algorithm"
+        label:
+          type: string
+
+    CreateTransactionRequest:
+      type: object
+      properties:
+        deviceKey:
+          type: string
+          format: uuid
+        data:
+          type: string
+
+    CreateTransactionResponse:
+      type: object
+      properties:
+        signature:
+          type: string
+        signedData:
+          type: string

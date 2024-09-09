@@ -9,8 +9,9 @@ import (
 )
 
 type Storage interface {
-	CreateDevice(ctx context.Context, input CreateDeviceInput) (Device, error)
+	ListDevices(ctx context.Context) ([]Device, error)
 	FindDevice(ctx context.Context, key uuid.UUID) (Device, error)
+	CreateDevice(ctx context.Context, input CreateDeviceInput) (Device, error)
 	CreateTransaction(ctx context.Context, input CreateTransactionInput) (Transaction, error)
 }
 
@@ -22,14 +23,60 @@ type Handler struct {
 func NewHandler(m *http.ServeMux, s Storage) *Handler {
 	handler := &Handler{mux: m, storage: s}
 
+	handler.mux.HandleFunc("GET /device", handler.ListDevices)
+	handler.mux.HandleFunc("GET /device/{key}", handler.FindDevice)
 	handler.mux.HandleFunc("POST /device", handler.CreateDevice)
-	handler.mux.HandleFunc("POST /transaction", handler.SignTransaction)
+	handler.mux.HandleFunc("POST /transaction", handler.CreateTransaction)
 
 	return handler
 }
 
 func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	h.mux.ServeHTTP(w, r)
+}
+
+func (h *Handler) ListDevices(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+
+	devices, err := h.storage.ListDevices(r.Context())
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	response, err := json.Marshal(devices)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	if _, err := w.Write(response); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+	}
+}
+
+func (h *Handler) FindDevice(w http.ResponseWriter, r *http.Request) {
+	key, err := uuid.Parse(r.URL.Query().Get("key"))
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	device, err := h.storage.FindDevice(r.Context(), key)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	response, err := json.Marshal(device)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	if _, err := w.Write(response); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+	}
 }
 
 type CreateDeviceRequest struct {
@@ -50,53 +97,46 @@ func (h *Handler) CreateDevice(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	input := CreateDeviceInput{
-		Key:       body.Key,
-		Algorithm: body.Algorithm,
-		Label:     body.Label,
-	}
-
-	// TODO: handling multiple cases
-	if _, err := h.storage.CreateDevice(r.Context(), input); err != nil {
+	if _, err := h.storage.CreateDevice(r.Context(), CreateDeviceInput(body)); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 }
 
-type SignTransactionRequest struct {
-	DeviceID uuid.UUID `json:"deviceID"`
-	Data     string    `json:"data"`
+type CreateTransactionRequest struct {
+	DeviceKey uuid.UUID `json:"deviceKey"`
+	Data      string    `json:"data"`
 }
 
-type SignTransactionResponse struct {
+type CreateTransactionResponse struct {
 	Signature  string `json:"signature"`
 	SignedData string `json:"signedData"`
 }
 
-func (h *Handler) SignTransaction(w http.ResponseWriter, r *http.Request) {
+func (h *Handler) CreateTransaction(w http.ResponseWriter, r *http.Request) {
 	if r.Body == nil {
 		http.Error(w, ErrEmptyJSONBody.Error(), http.StatusBadRequest)
 		return
 	}
 
-	var body SignTransactionRequest
+	var body CreateTransactionRequest
 	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
-	input := CreateTransactionInput{
-		DeviceID: body.DeviceID,
-		Data:     body.Data,
-	}
-
-	transaction, err := h.storage.CreateTransaction(r.Context(), input)
+	transaction, err := h.storage.CreateTransaction(r.Context(), CreateTransactionInput(body))
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
-	response, _ := json.Marshal(transaction)
+	response, err := json.Marshal(transaction)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
 	if _, err := w.Write(response); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 	}

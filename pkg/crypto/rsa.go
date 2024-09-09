@@ -9,59 +9,6 @@ import (
 	"encoding/pem"
 )
 
-// type RSA struct {
-// 	keyPair    *RSAKeyPair
-// 	marshaller RSAMarshaler
-// 	signer     RSASigner
-// }
-
-// func NewRSA() (*RSA, error) {
-// 	generator := NewRSAGenerator()
-// 	keyPair, err := generator.Generate()
-// 	if err != nil {
-// 		return nil, err
-// 	}
-
-// 	marshaller := NewRSAMarshaler()
-// 	_, private, err := marshaller.Marshal(*keyPair)
-// 	if err != nil {
-// 		return nil, err
-// 	}
-
-// 	decodedPrivate, err := marshaller.Unmarshal(private)
-// 	if err != nil {
-// 		return nil, err
-// 	}
-
-// 	signer := NewRSASigner(decodedPrivate.Private)
-
-// 	algorithm := RSA{
-// 		keyPair:    keyPair,
-// 		marshaller: marshaller,
-// 		signer:     *signer,
-// 	}
-
-// 	return &algorithm, nil
-// }
-
-// func (r *RSA) Keys() ([]byte, []byte, error) {
-// 	public, private, err := r.marshaller.Marshal(*r.keyPair)
-// 	if err != nil {
-// 		return nil, nil, err
-// 	}
-
-// 	return public, private, nil
-// }
-
-// func (r *RSA) Sign(data []byte) ([]byte, error) {
-// 	signature, err := r.signer.Sign(data)
-// 	if err != nil {
-// 		return nil, err
-// 	}
-
-// 	return signature, nil
-// }
-
 // RSAKeyPair is a DTO that holds RSA private and public keys.
 type RSAKeyPair struct {
 	Public  *rsa.PublicKey
@@ -97,7 +44,6 @@ func NewRSAMarshaler() RSAMarshaler {
 	return RSAMarshaler{}
 }
 
-// TODO: fix arg here
 // Marshal takes an RSAKeyPair and encodes it to be written on disk.
 // It returns the public and the private key as a byte slice.
 func (m *RSAMarshaler) Marshal(keyPair RSAKeyPair) ([]byte, []byte, error) {
@@ -126,6 +72,7 @@ func (m *RSAMarshaler) Unmarshal(privateKeyBytes []byte) (*RSAKeyPair, error) {
 	}
 
 	pair := &RSAKeyPair{Private: privateKey, Public: &privateKey.PublicKey}
+
 	return pair, nil
 }
 

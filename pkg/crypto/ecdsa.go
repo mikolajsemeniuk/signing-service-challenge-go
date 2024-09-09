@@ -9,60 +9,6 @@ import (
 	"encoding/pem"
 )
 
-// type ECDSA struct {
-// 	keyPair    *ECCKeyPair
-// 	marshaller ECCMarshaler
-// 	signer     ECDSASigner
-// }
-
-// func NewECDSA() (*ECDSA, error) {
-// 	generator := NewECCGenerator()
-// 	marshaller := NewECCMarshaler()
-
-// 	keys, err := generator.Generate()
-// 	if err != nil {
-// 		return nil, err
-// 	}
-
-// 	_, private, err := marshaller.Marshal(*keys)
-// 	if err != nil {
-// 		return nil, err
-// 	}
-
-// 	decodedPrivate, err := marshaller.Unmarshal(private)
-// 	if err != nil {
-// 		return nil, err
-// 	}
-
-// 	signer := NewECDSASigner(decodedPrivate.Private)
-
-// 	algorithm := ECDSA{
-// 		keyPair:    keys,
-// 		marshaller: marshaller,
-// 		signer:     *signer,
-// 	}
-
-// 	return &algorithm, nil
-// }
-
-// func (e *ECDSA) Keys() ([]byte, []byte, error) {
-// 	public, private, err := e.marshaller.Marshal(*e.keyPair)
-// 	if err != nil {
-// 		return nil, nil, err
-// 	}
-
-// 	return public, private, nil
-// }
-
-// func (e *ECDSA) Sign(data []byte) ([]byte, error) {
-// 	signature, err := e.signer.Sign(data)
-// 	if err != nil {
-// 		return nil, err
-// 	}
-
-// 	return signature, nil
-// }
-
 // ECCKeyPair is a DTO that holds ECC private and public keys.
 type ECCKeyPair struct {
 	Public  *ecdsa.PublicKey
@@ -99,7 +45,6 @@ func NewECCMarshaler() ECCMarshaler {
 	return ECCMarshaler{}
 }
 
-// TODO: fix arg here
 // Encode takes an ECCKeyPair and encodes it to be written on disk.
 // It returns the public and the private key as a byte slice.
 func (m ECCMarshaler) Marshal(keyPair ECCKeyPair) ([]byte, []byte, error) {
