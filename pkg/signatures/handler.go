@@ -15,24 +15,28 @@ type Storage interface {
 	CreateTransaction(ctx context.Context, input CreateTransactionInput) (Transaction, error)
 }
 
-type Handler struct {
-	mux     *http.ServeMux
-	storage Storage
-}
+func NewHandler(s Storage) *Handler {
+	router := http.NewServeMux()
 
-func NewHandler(m *http.ServeMux, s Storage) *Handler {
-	handler := &Handler{mux: m, storage: s}
+	handler := &Handler{router: router, storage: s}
 
-	handler.mux.HandleFunc("GET /device", handler.ListDevices)
-	handler.mux.HandleFunc("GET /device/{key}", handler.FindDevice)
-	handler.mux.HandleFunc("POST /device", handler.CreateDevice)
-	handler.mux.HandleFunc("POST /transaction", handler.CreateTransaction)
+	handler.router.HandleFunc("GET /device", handler.ListDevices)
+	handler.router.HandleFunc("GET /device/{key}", handler.FindDevice)
+	handler.router.HandleFunc("POST /device", handler.CreateDevice)
+	handler.router.HandleFunc("POST /transaction", handler.CreateTransaction)
 
 	return handler
 }
 
+// Handler provides API compatible with HTTP and REST standards.
+type Handler struct {
+	router  *http.ServeMux
+	storage Storage
+}
+
+// ServeHTTP is used for joining handlers to HTTP server.
 func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	h.mux.ServeHTTP(w, r)
+	h.router.ServeHTTP(w, r)
 }
 
 func (h *Handler) ListDevices(w http.ResponseWriter, r *http.Request) {
