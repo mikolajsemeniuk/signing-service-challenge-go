@@ -1,4 +1,7 @@
+// Package docs provides API documentation.
 package docs
+
+// handler.go supports rendering the documentation through an HTML template and serves the OpenAPI standard for API specifications.
 
 import (
 	"html/template"

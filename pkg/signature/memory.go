@@ -1,5 +1,9 @@
 package signature
 
+// memory.go implements an in-memory storage system for managing signature devices and their transactions.
+// It provides concurrency-safe operations for listing, finding, and creating devices, as well as for creating transactions.
+// The in-memory store is protected by a read-write mutex to ensure thread safety, and the devices are stored using their UUID as the key.
+
 import (
 	"context"
 	"encoding/base64"

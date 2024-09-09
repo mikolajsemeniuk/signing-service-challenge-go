@@ -5,8 +5,6 @@ import (
 	"net/http"
 	"time"
 
-	_ "embed"
-
 	"github.com/fiskaly/coding-challenges/signing-service-challenge/pkg/docs"
 	"github.com/fiskaly/coding-challenges/signing-service-challenge/pkg/signature"
 	_ "github.com/joho/godotenv/autoload"
@@ -14,10 +12,10 @@ import (
 )
 
 type config struct {
-	Listen       string        `envconfig:"LISTEN"        required:"true"`
-	ReadTimeout  time.Duration `envconfig:"READ_TIMEOUT"  default:"5s"`
-	WriteTimeout time.Duration `envconfig:"WRITE_TIMEOUT" default:"5s"`
-	IdleTimeout  time.Duration `envconfig:"IDLE_TIMEOUT"  default:"30s"`
+	Listen       string        `envconfig:"LISTEN" required:"true"`
+	ReadTimeout  time.Duration `default:"5s"       envconfig:"WRITE_TIMEOUT"`
+	WriteTimeout time.Duration `default:"30s"      envconfig:"IDLE_TIMEOUT"`
+	IdleTimeout  time.Duration `default:"30s"      envconfig:"IDLE_TIMEOUT"`
 }
 
 func main() {
@@ -30,8 +28,19 @@ func main() {
 
 	router := http.NewServeMux()
 
+	// Chain api documentation.
 	router.Handle("/", docs.NewHandler())
+
+	// Chain other services below...
 	router.Handle("/signature/", http.StripPrefix("/signature", signature.NewHandler(storage)))
+	// router.Handle("/account/", http.StripPrefix("/account", account.NewHandler())
+	// router.Handle("/cart/", http.StripPrefix("/cart",  cart.NewHandler())
+	// router.Handle("/wallet/", http.StripPrefix("/wallet",  wallet.NewHandler())
+	// etc...
+
+	// Chain k8s health checks, for now we do not have any external services but in future we can use errgroup and if any service above reports problem.
+	router.HandleFunc("GET /liveness", func(w http.ResponseWriter, _ *http.Request) { w.WriteHeader(http.StatusOK) })
+	router.HandleFunc("GET /readiness", func(w http.ResponseWriter, _ *http.Request) { w.WriteHeader(http.StatusOK) })
 
 	server := &http.Server{
 		Addr:         config.Listen,

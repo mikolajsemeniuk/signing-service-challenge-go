@@ -15,3 +15,4 @@ linters:
     - varnamelen
     - exhaustruct
     - errcheck
+    - dupl

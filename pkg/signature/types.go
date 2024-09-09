@@ -1,4 +1,7 @@
+// Package signature provides implement an API service that allows to create `signature devices` with which they can sign arbitrary transaction data.
 package signature
+
+// types.go implements types shared across the package with it's validating rules.
 
 import (
 	"encoding/json"

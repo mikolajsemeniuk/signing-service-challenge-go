@@ -11,6 +11,7 @@ import (
 	"github.com/fiskaly/coding-challenges/signing-service-challenge/pkg/signature"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 // Mock storage for testing.
@@ -41,7 +42,7 @@ func TestHandler_ListDevices(t *testing.T) {
 	t.Parallel()
 
 	store := &storage{
-		listDevices: func(ctx context.Context) ([]signature.Device, error) {
+		listDevices: func(_ context.Context) ([]signature.Device, error) {
 			return []signature.Device{
 				{Key: uuid.New(), Label: "Device 1", Algorithm: signature.Algorithm("RSA")},
 				{Key: uuid.New(), Label: "Device 2", Algorithm: signature.Algorithm("ECC")},
@@ -60,7 +61,7 @@ func TestHandler_ListDevices(t *testing.T) {
 	var devices []signature.Device
 
 	err := json.NewDecoder(recorderorder.Body).Decode(&devices)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.Len(t, devices, 2)
 }
 
@@ -70,10 +71,11 @@ func TestHandler_FindDevice(t *testing.T) {
 	deviceID := uuid.New()
 
 	store := &storage{
-		findDevice: func(ctx context.Context, key uuid.UUID) (signature.Device, error) {
+		findDevice: func(_ context.Context, key uuid.UUID) (signature.Device, error) {
 			if key == deviceID {
 				return signature.Device{Key: deviceID, Label: "Device Found", Algorithm: signature.Algorithm("RSA")}, nil
 			}
+
 			return signature.Device{}, signature.ErrDeviceNotFound
 		},
 	}
@@ -88,7 +90,7 @@ func TestHandler_FindDevice(t *testing.T) {
 
 	var device signature.Device
 	err := json.NewDecoder(recorder.Body).Decode(&device)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.Equal(t, deviceID, device.Key)
 	assert.Equal(t, "Device Found", device.Label)
 }
@@ -104,7 +106,7 @@ func TestHandler_CreateDevice(t *testing.T) {
 	}
 
 	store := &storage{
-		createDevice: func(ctx context.Context, input signature.CreateDeviceInput) (signature.Device, error) {
+		createDevice: func(_ context.Context, input signature.CreateDeviceInput) (signature.Device, error) {
 			return signature.Device{
 				Key:       input.Key,
 				Algorithm: input.Algorithm,
@@ -115,9 +117,12 @@ func TestHandler_CreateDevice(t *testing.T) {
 
 	handler := signature.NewHandler(store)
 
-	body, _ := json.Marshal(device)
+	body, err := json.Marshal(device)
+	require.NoError(t, err)
+
 	request := httptest.NewRequest(http.MethodPost, "/device", bytes.NewReader(body))
 	request.Header.Set("Content-Type", "application/json")
+
 	recorder := httptest.NewRecorder()
 
 	handler.ServeHTTP(recorder, request)
@@ -125,8 +130,8 @@ func TestHandler_CreateDevice(t *testing.T) {
 	assert.Equal(t, http.StatusOK, recorder.Code)
 
 	var createdDevice signature.Device
-	err := json.NewDecoder(recorder.Body).Decode(&createdDevice)
-	assert.NoError(t, err)
+	err = json.NewDecoder(recorder.Body).Decode(&createdDevice)
+	require.NoError(t, err)
 	assert.Equal(t, deviceID, createdDevice.Key)
 	assert.Equal(t, "Test Device", createdDevice.Label)
 	assert.Equal(t, signature.ECC, createdDevice.Algorithm)
@@ -142,7 +147,7 @@ func TestHandler_CreateTransaction(t *testing.T) {
 	}
 
 	store := &storage{
-		createTransaction: func(ctx context.Context, input signature.CreateTransactionInput) (signature.Transaction, error) {
+		createTransaction: func(_ context.Context, input signature.CreateTransactionInput) (signature.Transaction, error) {
 			return signature.Transaction{
 				Signature:  "dummy-signature",
 				SignedData: input.Data,
@@ -152,9 +157,12 @@ func TestHandler_CreateTransaction(t *testing.T) {
 
 	handler := signature.NewHandler(store)
 
-	body, _ := json.Marshal(transactionRequest)
+	body, err := json.Marshal(transactionRequest)
+	require.NoError(t, err)
+
 	request := httptest.NewRequest(http.MethodPost, "/transaction", bytes.NewReader(body))
 	request.Header.Set("Content-Type", "application/json")
+
 	recorder := httptest.NewRecorder()
 
 	handler.ServeHTTP(recorder, request)
@@ -162,8 +170,8 @@ func TestHandler_CreateTransaction(t *testing.T) {
 	assert.Equal(t, http.StatusOK, recorder.Code)
 
 	var createdTransaction signature.Transaction
-	err := json.NewDecoder(recorder.Body).Decode(&createdTransaction)
-	assert.NoError(t, err)
+	err = json.NewDecoder(recorder.Body).Decode(&createdTransaction)
+	require.NoError(t, err)
 	assert.Equal(t, "dummy-signature", createdTransaction.Signature)
 	assert.Equal(t, "Test Data", createdTransaction.SignedData)
 }

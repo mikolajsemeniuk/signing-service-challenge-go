@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/fiskaly/coding-challenges/signing-service-challenge/pkg/cryptic"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestRSAGenerator_Generate(t *testing.T) {
@@ -14,56 +15,41 @@ func TestRSAGenerator_Generate(t *testing.T) {
 	generator := cryptic.NewRSAGenerator()
 
 	keyPair, err := generator.Generate()
-	if err != nil {
-		t.Fatalf("Failed to generate RSA key pair: %v", err)
-	}
+	assert.NoError(t, err, "Failed to generate RSA key pair")
 
-	if keyPair.Public == nil || keyPair.Private == nil {
-		t.Fatal("Generated RSA key pair should not be nil")
-	}
+	assert.NotNil(t, keyPair.Public, "Generated public key should not be nil")
+	assert.NotNil(t, keyPair.Private, "Generated private key should not be nil")
 }
 
 func TestRSAMarshaler_Marshal(t *testing.T) {
 	t.Parallel()
 	generator := cryptic.NewRSAGenerator()
 	keyPair, err := generator.Generate()
-	if err != nil {
-		t.Fatalf("Failed to generate RSA key pair: %v", err)
-	}
+	assert.NoError(t, err, "Failed to generate RSA key pair")
 
 	marshaler := cryptic.NewRSAMarshaler()
 	public, private, err := marshaler.Marshal(*keyPair)
-	if err != nil {
-		t.Fatalf("Failed to marshal RSA key pair: %v", err)
-	}
+	assert.NoError(t, err, "Failed to marshal RSA key pair")
 
-	if len(public) == 0 || len(private) == 0 {
-		t.Fatal("Marshalled public and private keys should not be empty")
-	}
+	assert.NotEmpty(t, public, "Marshalled public key should not be empty")
+	assert.NotEmpty(t, private, "Marshalled private key should not be empty")
 }
 
 func TestRSAMarshaler_Unmarshal(t *testing.T) {
 	t.Parallel()
 	generator := cryptic.NewRSAGenerator()
 	keyPair, err := generator.Generate()
-	if err != nil {
-		t.Fatalf("Failed to generate RSA key pair: %v", err)
-	}
+	assert.NoError(t, err, "Failed to generate RSA key pair")
 
 	marshaler := cryptic.NewRSAMarshaler()
 	_, private, err := marshaler.Marshal(*keyPair)
-	if err != nil {
-		t.Fatalf("Failed to marshal RSA key pair: %v", err)
-	}
+	assert.NoError(t, err, "Failed to marshal RSA key pair")
 
 	unmarshaledKeyPair, err := marshaler.Unmarshal(private)
-	if err != nil {
-		t.Fatalf("Failed to unmarshal RSA private key: %v", err)
-	}
+	assert.NoError(t, err, "Failed to unmarshal RSA private key")
 
-	if unmarshaledKeyPair.Private == nil || unmarshaledKeyPair.Public == nil {
-		t.Fatal("Unmarshaled RSA key pair should not be nil")
-	}
+	assert.NotNil(t, unmarshaledKeyPair.Private, "Unmarshaled private key should not be nil")
+	assert.NotNil(t, unmarshaledKeyPair.Public, "Unmarshaled public key should not be nil")
 }
 
 func TestRSASigner_Sign(t *testing.T) {
@@ -71,34 +57,24 @@ func TestRSASigner_Sign(t *testing.T) {
 
 	generator := cryptic.NewRSAGenerator()
 	keyPair, err := generator.Generate()
-	if err != nil {
-		t.Fatalf("Failed to generate RSA key pair: %v", err)
-	}
+	assert.NoError(t, err, "Failed to generate RSA key pair")
 
 	signer := cryptic.NewRSASigner(keyPair.Private)
 
 	data := []byte("test data")
 	signature, err := signer.Sign(data)
-	if err != nil {
-		t.Fatalf("Failed to sign data: %v", err)
-	}
-
-	if len(signature) == 0 {
-		t.Fatal("Signature should not be empty")
-	}
+	assert.NoError(t, err, "Failed to sign data")
+	assert.NotEmpty(t, signature, "Signature should not be empty")
 }
 
 func TestGenerateRSAWithMarshal(t *testing.T) {
 	t.Parallel()
 
 	public, private, err := cryptic.GenerateRSAWithMarshal()
-	if err != nil {
-		t.Fatalf("Failed to generate and marshal RSA keys: %v", err)
-	}
+	assert.NoError(t, err, "Failed to generate and marshal RSA keys")
 
-	if len(public) == 0 || len(private) == 0 {
-		t.Fatal("Generated public and private keys should not be empty")
-	}
+	assert.NotEmpty(t, public, "Generated public key should not be empty")
+	assert.NotEmpty(t, private, "Generated private key should not be empty")
 }
 
 func TestUnmarshalRSAWithSign(t *testing.T) {
@@ -106,28 +82,18 @@ func TestUnmarshalRSAWithSign(t *testing.T) {
 
 	generator := cryptic.NewRSAGenerator()
 	keyPair, err := generator.Generate()
-	if err != nil {
-		t.Fatalf("Failed to generate RSA key pair: %v", err)
-	}
+	assert.NoError(t, err, "Failed to generate RSA key pair")
 
 	marshaler := cryptic.NewRSAMarshaler()
 	_, private, err := marshaler.Marshal(*keyPair)
-	if err != nil {
-		t.Fatalf("Failed to marshal RSA key pair: %v", err)
-	}
+	assert.NoError(t, err, "Failed to marshal RSA key pair")
 
 	data := []byte("test data")
 	signature, err := cryptic.UnmarshalRSAWithSign(data, private)
-	if err != nil {
-		t.Fatalf("Failed to unmarshal and sign data: %v", err)
-	}
-
-	if len(signature) == 0 {
-		t.Fatal("Signature should not be empty")
-	}
+	assert.NoError(t, err, "Failed to unmarshal and sign data")
+	assert.NotEmpty(t, signature, "Signature should not be empty")
 
 	hash := sha256.Sum256(data)
-	if err := rsa.VerifyPKCS1v15(keyPair.Public, crypto.SHA256, hash[:], signature); err != nil {
-		t.Fatalf("Failed to verify signature: %v", err)
-	}
+	err = rsa.VerifyPKCS1v15(keyPair.Public, crypto.SHA256, hash[:], signature)
+	assert.NoError(t, err, "Failed to verify signature")
 }

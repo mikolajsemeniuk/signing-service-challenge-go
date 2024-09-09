@@ -1,49 +1,20 @@
 package main
 
 import (
-	"embed"
-	"fmt"
 	"log"
 
-	"github.com/golang-migrate/migrate/v4"
-	_ "github.com/golang-migrate/migrate/v4/database/postgres"
-	"github.com/golang-migrate/migrate/v4/source/iofs"
-	_ "github.com/joho/godotenv/autoload"
-	"github.com/kelseyhightower/envconfig"
+	"github.com/fiskaly/coding-challenges/signing-service-challenge/pkg/migrator"
 )
 
-const Version = 1
-
-//go:embed migrations/*.sql
-var migrations embed.FS
-
-type config struct {
-	User     string `envconfig:"PSQL_USER"     required:"true"`
-	Password string `envconfig:"PSQL_PASSWORD" required:"true"`
-	Host     string `envconfig:"PSQL_HOST"     required:"true"`
-	Database string `envconfig:"PSQL_DATABASE" required:"true"`
-	SSL      string `envconfig:"PSQL_SSL"      required:"true"`
-}
+// This is an example relational database migrator for PostgreSQL that utilizes the `golang-migrate`
+// library to handle schema migrations. The migrations are embedded within the binary using Go's
+// embed package, and the configuration is read from environment variables. It can be used as an
+// initContainer in a Kubernetes setup to automatically run database migrations when starting
+// services that depend on the database. The migration files are located in the `migrations` folder
+// and are applied to the PostgreSQL database defined by the environment variables.
 
 func main() {
-	var config config
-	if err := envconfig.Process("", &config); err != nil {
-		log.Fatal(err)
-	}
-
-	driver, err := iofs.New(migrations, "migrations")
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	source := fmt.Sprintf("postgres://%s:%s@%s/%s?sslmode=%s", config.User, config.Password, config.Host, config.Database, config.SSL)
-	migration, err := migrate.NewWithSourceInstance("iofs", driver, source)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	defer migration.Close()
-	if err = migration.Migrate(Version); err != nil && err != migrate.ErrNoChange {
+	if err := migrator.Migrate(); err != nil {
 		log.Fatal(err)
 	}
 }

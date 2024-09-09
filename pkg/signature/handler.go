@@ -1,5 +1,9 @@
 package signature
 
+// handler.go implements the HTTP handlers for managing signature devices and transactions.
+// It provides endpoints for listing devices, finding devices by UUID, creating new devices, and creating transactions.
+// These handlers interact with the underlying storage through the defined `Storage` interface, and responses in JSON format.
+
 import (
 	"context"
 	"encoding/json"
