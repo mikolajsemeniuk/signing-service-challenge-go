@@ -24,6 +24,11 @@
 ```sh
 go mod tidy
 go run cmd/web/main.go
+# visit http://localhost:8080/#/ or
+# * http://localhost:8080/#/operations/listDevices
+# * http://localhost:8080/#/operations/createDevice
+# * http://localhost:8080/#/operations/findDevice
+# * http://localhost:8080/#/operations/createTransaction
 ```
 
 ## Running tests

@@ -3,7 +3,7 @@ run:
 
 linters-settings:
   lll:
-    line-length: 155
+    line-length: 170
   nlreturn:
     block-size: 2
 

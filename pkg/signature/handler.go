@@ -7,6 +7,7 @@ package signature
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"net/http"
 
 	"github.com/google/uuid"
@@ -77,6 +78,11 @@ func (h *Handler) FindDevice(w http.ResponseWriter, r *http.Request) {
 	}
 
 	device, err := h.storage.FindDevice(r.Context(), key)
+	if errors.Is(err, ErrDeviceNotFound) {
+		http.Error(w, err.Error(), http.StatusNotFound)
+		return
+	}
+
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
@@ -160,6 +166,11 @@ func (h *Handler) CreateTransaction(w http.ResponseWriter, r *http.Request) {
 	}
 
 	transaction, err := h.storage.CreateTransaction(r.Context(), CreateTransactionInput(body))
+	if errors.Is(err, ErrDeviceNotFound) {
+		http.Error(w, err.Error(), http.StatusNotFound)
+		return
+	}
+
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return

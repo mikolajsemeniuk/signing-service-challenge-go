@@ -24,8 +24,9 @@ func NewRSAGenerator() RSAGenerator {
 
 // Generate generates a new RSAKeyPair.
 func (g *RSAGenerator) Generate() (*RSAKeyPair, error) {
-	// Security has been ignored for the sake of simplicity.
-	key, err := rsa.GenerateKey(rand.Reader, 512)
+	bits := 512 // Security has been ignored for the sake of simplicity.
+
+	key, err := rsa.GenerateKey(rand.Reader, bits)
 	if err != nil {
 		return nil, err
 	}
@@ -66,6 +67,7 @@ func (m *RSAMarshaler) Marshal(keyPair RSAKeyPair) ([]byte, []byte, error) {
 // Unmarshal takes an encoded RSA private key and transforms it into a rsa.PrivateKey.
 func (m *RSAMarshaler) Unmarshal(privateKeyBytes []byte) (*RSAKeyPair, error) {
 	block, _ := pem.Decode(privateKeyBytes)
+
 	privateKey, err := x509.ParsePKCS1PrivateKey(block.Bytes)
 	if err != nil {
 		return nil, err
@@ -101,12 +103,14 @@ func (s *RSASigner) Sign(dataToBeSigned []byte) ([]byte, error) {
 // GenerateRSAWithMarshal generates an RSA key pair, marshals it into PEM format, and returns the public and private keys.
 func GenerateRSAWithMarshal() ([]byte, []byte, error) {
 	generator := NewRSAGenerator()
+
 	keyPair, err := generator.Generate()
 	if err != nil {
 		return nil, nil, err
 	}
 
 	marshaler := NewRSAMarshaler()
+
 	public, private, err := marshaler.Marshal(*keyPair)
 	if err != nil {
 		return nil, nil, err
@@ -118,12 +122,14 @@ func GenerateRSAWithMarshal() ([]byte, []byte, error) {
 // UnmarshalRSAWithSign unmarshal the private key, signs the data using the corresponding RSA key, and returns the signature.
 func UnmarshalRSAWithSign(data, private []byte) ([]byte, error) {
 	marshaler := NewRSAMarshaler()
+
 	keyPair, err := marshaler.Unmarshal(private)
 	if err != nil {
 		return nil, err
 	}
 
 	signer := NewRSASigner(keyPair.Private)
+
 	signature, err := signer.Sign(data)
 	if err != nil {
 		return nil, err

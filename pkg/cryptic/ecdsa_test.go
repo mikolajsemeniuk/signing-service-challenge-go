@@ -70,6 +70,7 @@ func TestECDSASigner_Sign(t *testing.T) {
 	assert.NotEmpty(t, signature, "Signature should not be empty")
 
 	hashed := sha256.Sum256(data)
+
 	isValid := ecdsa.Verify(keyPair.Public, hashed[:], new(big.Int).SetBytes(signature[:len(signature)/2]), new(big.Int).SetBytes(signature[len(signature)/2:]))
 	assert.True(t, isValid, "Failed to verify the signature")
 }

@@ -41,7 +41,7 @@ paths:
 
   /signature/device/{key}:
     get:
-      summary: Find a specific device by key
+      summary: Find device by key
       operationId: findDevice
       parameters:
         - name: key
@@ -81,6 +81,8 @@ paths:
                 $ref: "#/components/schemas/CreateTransactionResponse"
         "400":
           description: Bad request error
+        "404":
+          description: Device not found
 
 components:
   schemas:

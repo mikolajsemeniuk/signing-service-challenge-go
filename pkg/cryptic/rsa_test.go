@@ -12,6 +12,7 @@ import (
 
 func TestRSAGenerator_Generate(t *testing.T) {
 	t.Parallel()
+
 	generator := cryptic.NewRSAGenerator()
 
 	keyPair, err := generator.Generate()
@@ -23,6 +24,7 @@ func TestRSAGenerator_Generate(t *testing.T) {
 
 func TestRSAMarshaler_Marshal(t *testing.T) {
 	t.Parallel()
+
 	generator := cryptic.NewRSAGenerator()
 	keyPair, err := generator.Generate()
 	assert.NoError(t, err, "Failed to generate RSA key pair")
@@ -37,6 +39,7 @@ func TestRSAMarshaler_Marshal(t *testing.T) {
 
 func TestRSAMarshaler_Unmarshal(t *testing.T) {
 	t.Parallel()
+
 	generator := cryptic.NewRSAGenerator()
 	keyPair, err := generator.Generate()
 	assert.NoError(t, err, "Failed to generate RSA key pair")

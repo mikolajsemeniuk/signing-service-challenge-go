@@ -75,6 +75,7 @@ func (m ECCMarshaler) Marshal(keyPair ECCKeyPair) ([]byte, []byte, error) {
 // Decode assembles an ECCKeyPair from an encoded private key.
 func (m ECCMarshaler) Unmarshal(privateKeyBytes []byte) (*ECCKeyPair, error) {
 	block, _ := pem.Decode(privateKeyBytes)
+
 	privateKey, err := x509.ParseECPrivateKey(block.Bytes)
 	if err != nil {
 		return nil, err
@@ -113,12 +114,14 @@ func (s *ECDSASigner) Sign(dataToBeSigned []byte) ([]byte, error) {
 // GenerateECDSAWithMarshal generates a new ECC key pair, marshals it to PEM format, and returns the public and private keys.
 func GenerateECDSAWithMarshal() ([]byte, []byte, error) {
 	generator := NewECCGenerator()
+
 	keyPair, err := generator.Generate()
 	if err != nil {
 		return nil, nil, err
 	}
 
 	marshaler := NewECCMarshaler()
+
 	public, private, err := marshaler.Marshal(*keyPair)
 	if err != nil {
 		return nil, nil, err
@@ -130,12 +133,14 @@ func GenerateECDSAWithMarshal() ([]byte, []byte, error) {
 // UnmarshalECDSAWithSign unmarshal the private key, signs the data using the corresponding ECDSA key, and returns the signature.
 func UnmarshalECDSAWithSign(data, private []byte) ([]byte, error) {
 	marshaler := NewECCMarshaler()
+
 	keyPair, err := marshaler.Unmarshal(private)
 	if err != nil {
 		return nil, err
 	}
 
 	signer := NewECDSASigner(keyPair.Private)
+
 	signature, err := signer.Sign(data)
 	if err != nil {
 		return nil, err
