@@ -51,16 +51,16 @@ func TestHandler_ListDevices(t *testing.T) {
 	}
 
 	handler := signature.NewHandler(store)
-	requestuest := httptest.NewRequest(http.MethodGet, "/device", nil)
-	recorderorder := httptest.NewRecorder()
+	request := httptest.NewRequest(http.MethodGet, "/device", nil)
+	recorder := httptest.NewRecorder()
 
-	handler.ServeHTTP(recorderorder, requestuest)
+	handler.ServeHTTP(recorder, request)
 
-	assert.Equal(t, http.StatusOK, recorderorder.Code)
+	assert.Equal(t, http.StatusOK, recorder.Code)
 
 	var devices []signature.Device
 
-	err := json.NewDecoder(recorderorder.Body).Decode(&devices)
+	err := json.NewDecoder(recorder.Body).Decode(&devices)
 	require.NoError(t, err)
 	assert.Len(t, devices, 2)
 }
